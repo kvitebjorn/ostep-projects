@@ -17,9 +17,10 @@
  * @return Returns 0 on successful execution, or a non-zero value if an error
  *         occurs.
  *
- *       Errors are printed on stdout, opposed to stderr, as specified in the requirements.
- *       The program will exit immediately after the first error, instead of continuing,
- *       as specified in the requirements.
+ *         1. Errors are printed on stdout, opposed to stderr.
+ *         2. The program will exit immediately after the first error, instead of continuing.
+ *
+ *         1 & 2 are as specified in the requirements.
  */
 int main(int argc, char *argv[])
 {
@@ -29,13 +30,11 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  // Buffer to read the file content into
   char buf[BUFSIZ];
 
-  // Loop through all the files
   for (int i = 1; i < argc; i++)
   {
-    // Open the file in read-only mode
+    // Open the file for reading
     FILE *f = fopen(argv[i], "r");
     if (f == NULL)
     {
@@ -43,24 +42,21 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-    // Get the file content line-by-line, and print it
+    // Read and print the contents of the file line-by-line
     while (fgets(buf, sizeof(buf), f) != NULL)
     {
-      printf("%s", buf);
+      fputs(buf, stdout);
     }
 
-    // Cleanup
-    if (feof(f))
+    // Check for read errors
+    if (ferror(f))
     {
-      // If we reached the end of the file, we can close it
-      fclose(f);
-    }
-    else
-    {
-      // If we didn't reach the end of the file, there was an error
       printf("wcat: error reading file\n");
+      fclose(f);
       exit(1);
     }
+
+    fclose(f);
   }
 
   return 0;
