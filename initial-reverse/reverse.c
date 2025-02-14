@@ -5,6 +5,33 @@
 #include <errno.h>
 
 /**
+ * @brief Opens a file and gets its file status.
+ *
+ * @param filename The name of the file to open.
+ * @param mode The mode in which to open the file.
+ * @param sb A pointer to a struct stat to store the file status.
+ * @return A pointer to the opened file, or NULL if an error occurred.
+ */
+FILE *open_file(const char *filename, const char *mode, struct stat *sb)
+{
+  FILE *file = fopen(filename, mode);
+  if (file == NULL)
+  {
+    fprintf(stderr, "reverse: cannot open file '%s'\n", filename);
+    return NULL;
+  }
+
+  if (lstat(filename, sb) == -1)
+  {
+    perror("reverse: error getting file info");
+    fclose(file);
+    return NULL;
+  }
+
+  return file;
+}
+
+/**
  * @file reverse.c
  * @brief This file contains the main function for a program
  *        that reverses the contents of a file.
@@ -31,36 +58,19 @@ int main(int argc, char *argv[])
 
   if (argc > 1)
   {
-    input = fopen(argv[1], "r");
+    input = open_file(argv[1], "r", &sb_input);
     if (input == NULL)
     {
-      fprintf(stderr, "reverse: cannot open file '%s'\n", argv[1]);
-      exit(1);
-    }
-
-    if (lstat(argv[1], &sb_input) == -1)
-    {
-      perror("reverse: error getting file info");
-      fclose(input);
       exit(1);
     }
   }
 
   if (argc > 2)
   {
-    output = fopen(argv[2], "w");
+    output = open_file(argv[2], "w", &sb_output);
     if (output == NULL)
     {
-      fprintf(stderr, "reverse: cannot open file '%s'\n", argv[2]);
       fclose(input);
-      exit(1);
-    }
-
-    if (lstat(argv[2], &sb_output) == -1)
-    {
-      perror("reverse: error getting file info");
-      fclose(input);
-      fclose(output);
       exit(1);
     }
 
@@ -74,31 +84,32 @@ int main(int argc, char *argv[])
   }
 
   // Store the input stream line-by-line into a list of strings
-  // If the requirement was ONLY files, then we could use fseek and ftell
-  //   for a huge performance boost, handling large files much better,
-  //   especially if done in chunks instead of byte-by-byte
   char **lines = NULL;
   size_t lines_size = 0;
+  size_t lines_capacity = 0;
   char *line = NULL;
   size_t line_size = 0;
 
   while (getline(&line, &line_size, input) != -1)
   {
-    // Resize the list of strings to accommodate the new line
-    // The **temp shenanigans are necessary because realloc can return NULL
-    char **temp = realloc(lines, (lines_size + 1) * sizeof(char *));
-    if (temp == NULL)
+    // Only `realloc` when necessary by doubling the capacity as we approach it
+    if (lines_size >= lines_capacity)
     {
-      fprintf(stderr, "reverse: memory allocation error\n");
-      for (size_t i = 0; i < lines_size; i++)
-        free(lines[i]);
-      free(lines);
-      free(line);
-      fclose(input);
-      fclose(output);
-      exit(1);
+      lines_capacity = lines_capacity == 0 ? 1 : lines_capacity * 2;
+      char **temp = realloc(lines, lines_capacity * sizeof(char *));
+      if (temp == NULL)
+      {
+        fprintf(stderr, "reverse: memory allocation error\n");
+        for (size_t i = 0; i < lines_size; i++)
+          free(lines[i]);
+        free(lines);
+        free(line);
+        fclose(input);
+        fclose(output);
+        exit(1);
+      }
+      lines = temp;
     }
-    lines = temp;
     lines[lines_size] = line; // Use getline's buffer directly
     line = NULL;              // Ensure getline allocates a new buffer next iteration
     line_size = 0;
