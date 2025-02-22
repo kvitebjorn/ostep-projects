@@ -2442,6 +2442,45 @@ static void process_arithmetic_command(conn *c, token_t *tokens, const size_t nt
         return;
     }
 
+    const bool is_mult = strcmp(tokens[0].value, "mult") == 0;
+    const bool is_div = strcmp(tokens[0].value, "div") == 0;
+    if (is_mult || is_div)
+    {
+        char *ptr;
+        uint64_t value;
+        item *it;
+        uint32_t hv;
+
+        hv = hash(key, nkey);
+        item_lock(hv);
+
+        it = do_item_get(key, nkey, hv, c, DONT_UPDATE);
+        if (!it)
+        {
+            out_string(c, "NOT_FOUND");
+            return;
+        }
+        ptr = ITEM_data(it);
+
+        if (!safe_strtoull(ptr, &value))
+        {
+            do_item_remove(it);
+            out_string(c, "CLIENT_ERROR invalid key argument");
+            return;
+        }
+        if (is_mult)
+        {
+            delta--;
+            delta *= value;
+        }
+        else
+        {
+            delta = value - (value / delta);
+        }
+
+        item_unlock(hv);
+    }
+
     switch (add_delta(c, key, nkey, incr, delta, temp, NULL))
     {
     case OK:
@@ -3443,6 +3482,18 @@ void process_command_ascii(conn *c, char *command)
             out_string(c, "ERROR");
         }
     }
+    else if (first == 'm')
+    {
+        if (strcmp(tokens[COMMAND_TOKEN].value, "mult") == 0)
+        {
+            WANT_TOKENS_OR(ntokens, 4, 5);
+            process_arithmetic_command(c, tokens, ntokens, 1);
+        }
+        else
+        {
+            out_string(c, "ERROR");
+        }
+    }
     else if (first == 'd')
     {
         if (strcmp(tokens[COMMAND_TOKEN].value, "delete") == 0)
@@ -3451,7 +3502,8 @@ void process_command_ascii(conn *c, char *command)
             WANT_TOKENS(ntokens, 3, 5);
             process_delete_command(c, tokens, ntokens);
         }
-        else if (strcmp(tokens[COMMAND_TOKEN].value, "decr") == 0)
+        else if (strcmp(tokens[COMMAND_TOKEN].value, "decr") == 0 ||
+                 strcmp(tokens[COMMAND_TOKEN].value, "div") == 0)
         {
 
             WANT_TOKENS_OR(ntokens, 4, 5);
