@@ -1,0 +1,38 @@
+# Object files
+*.o
+*.obj
+
+# Static libraries
+*.a
+*.lib
+
+# Shared libraries
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# Executables / binaries
+*.out
+*.exe
+*.app
+*.bin
+
+# Disk images
+*.img
+
+# Linker / dependency files
+*.d
+*.ld
+*.map
+
+# Debug symbols
+*.dSYM/
+*.pdb
+*.sym
+
+# Build directories
+build/
+bin/
+dist/
+tests-out/
