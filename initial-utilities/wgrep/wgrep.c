@@ -73,13 +73,6 @@ int main(int argc, char *argv[])
     // Do the thing with the file
     do_the_thing(argv[1], f);
 
-    if (ferror(f))
-    {
-      printf("wgrep: error reading file\n");
-      fclose(f);
-      exit(1);
-    }
-
     // Cleanup
     fclose(f);
   }

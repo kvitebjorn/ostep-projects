@@ -114,7 +114,7 @@ spin:
     7075:	ff 00                	incl   (%eax)
     7077:	00 00                	add    %al,(%eax)
     7079:	9a cf 00 ff ff 00 00 	lcall  $0x0,$0xffff00cf
-    7080:	00                   	.byte 0
+    7080:	00                   	.byte 0x0
     7081:	92                   	xchg   %eax,%edx
     7082:	cf                   	iret
 	...

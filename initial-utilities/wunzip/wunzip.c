@@ -50,13 +50,6 @@ int main(int argc, char *argv[])
       }
     }
 
-    if (ferror(fp))
-    {
-      printf("wunzip: error reading file\n");
-      fclose(fp);
-      exit(1);
-    }
-
     fclose(fp);
   }
 

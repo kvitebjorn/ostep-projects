@@ -68,13 +68,6 @@ int main(int argc, char *argv[])
     }
 
     // Cleanup
-    if (ferror(fp))
-    {
-      printf("wzip: error reading file\n");
-      fclose(fp);
-      exit(1);
-    }
-
     fclose(fp);
   }
 
