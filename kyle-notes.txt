@@ -1,3 +1,4 @@
+sudo pacman -S base-devel gdb
 sudo pacman -S qemu-full virt-manager libvirt dnsmasq virt-viewer expect
 sudo systemctl enable --now libvirtd
 sudo usermod -aG libvirt $(whoami)
